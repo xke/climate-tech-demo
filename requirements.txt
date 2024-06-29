@@ -1,0 +1,23 @@
+streamlit
+crewai
+crewai[tools]
+langchain-core
+langchain-community
+langchain-groq
+langchain-openai # see related issue https://github.com/microsoft/promptflow/issues/3079
+langchain-anthropic
+chromadb
+pysqlite3-binary
+load_dotenv
+unstructured
+pyowm
+tools
+wikipedia
+yfinance
+sec-api
+tiktoken
+faiss-cpu
+python-dotenv
+agentops==0.2.3
+weave
+langsmith
