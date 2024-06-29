@@ -30,7 +30,7 @@ from datetime import date
 #    return result
 
 #@weave.op()
-@agentops.record_function("run_crew")
+#agentops.record_function("run_crew")
 def run_crew(model, user_input, ira_agent_enabled, ira_agent):
 
     st.session_state.messages.append({"role": "user", "content": user_input})
