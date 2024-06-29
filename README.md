@@ -1,5 +1,7 @@
 # climate-tech-demo
 
+deployed at https://climate-tech-demo.streamlit.app
+
 environment variables needed:
 
 * OPENAI_API_KEY: For the OpenAI `gpt` AI models
