@@ -13,6 +13,7 @@ import weave
 #from agents.technical_indicators_agent import get_technical_indicators_agent
 
 from agents.ira_agent import get_ira_agent
+from agents.eli_agent import get_eli_agent
 
 from textwrap import dedent
 import os
@@ -31,7 +32,7 @@ from datetime import date
 
 #@weave.op()
 #agentops.record_function("run_crew")
-def run_crew(model, user_input, ira_agent_enabled, ira_agent):
+def run_crew(model, user_input, zip_code, property_type, ira_agent_enabled, ira_agent, eli_agent_enabled, eli_agent):
 
     st.session_state.messages.append({"role": "user", "content": user_input})
     st.chat_message("user").write(user_input)
@@ -56,6 +57,24 @@ def run_crew(model, user_input, ira_agent_enabled, ira_agent):
             agent=ira_agent
         )
         tasksList.append(analyze_ira_task)
+
+
+    if eli_agent_enabled:
+        agentsList.append(eli_agent)
+        analyze_eli_task = Task(
+            description=dedent(f"""
+                Please respond to this user inquiry in a helpful and friendly way:
+                {user_input}
+                Here is the zip code: {zip_code}  
+                Here is the property type: {property_type}  
+            """),
+            expected_output=dedent(f"""
+                Your output is a response to the user inquiry
+                as returned from the ELI API.
+            """),
+            agent=eli_agent
+        )
+        tasksList.append(analyze_eli_task)
 
     #print(agentsList)
     #print(tasksList)
@@ -93,29 +112,24 @@ if __name__ == "__main__":
     # Set up the Streamlit UI customization sidebar
     st.sidebar.title('Customizations')
 
-    #TODO: issue with using gpt-3.5-turbo for some reason
     model = st.sidebar.selectbox(
        'Choose AI model to use',
        ['gpt-3.5-turbo', 'gpt-4o', 'claude-3-5-sonnet-20240620', 'claude-3-haiku-20240307', 'llama3-8b-8192', 'mixtral-8x7b-32768', 'gemma-7b-it'],
-       index=0, # default to claude-3-haiku-20240307
+       index=0, # default index
     )
 
-    # else:
-    #     # some of these HF models are too big to run as is: 'meta-llama/Meta-Llama-3-8B-Instruct', 'mistralai/Mixtral-8x22B-Instruct-v0.1', 'google/gemma-7b-it'
-    #     chosen_llm = HuggingFaceHub(
-    #         repo_id=model,
-    #         huggingfacehub_api_token=os.environ['HF_TOKEN'],
-    #         task="text-generation")
+    zip_code = st.sidebar.text_input(
+        'Zip code',
+        placeholder="94109"
+    )
 
-    #historical_horizon_in_years = st.sidebar.number_input(
-    #    'Historical time horizon (in years)',
-    #    value=1.0, min_value=0.0, max_value=10.0, step=0.5, format="%.1f"
-    #)
+    property_type = st.sidebar.selectbox(
+        'Property type',
+        ['single_family', 'multifamily', 'commercial'],
+        index=0, # default index
+    )
 
-    #prediction_time_horizon_in_years = st.sidebar.number_input(
-    #    'Prediction time horizon (in years)',
-    #    value=0.5, min_value=0.0, max_value=10.0, step=0.5, format="%.1f"
-    #)
+    
 
     # Define agents with their specific roles and goals
 
@@ -135,8 +149,26 @@ if __name__ == "__main__":
         value=True
     )
 
+    ira_agent = None
+
     if ira_agent_enabled:
         ira_agent = get_ira_agent(model)
+
+    eli_agent_enabled = st.sidebar.checkbox(
+        'ELI agent (via ELI API)',
+        value=True
+    )
+
+    eli_agent = None
+
+    if eli_agent_enabled:
+
+        if zip_code == None:
+            zip_code = "94109"
+        if property_type == None:
+            property_type = "single_family"
+
+        eli_agent = get_eli_agent(model, zip_code, property_type)
 
 
     st.sidebar.write("")
@@ -166,7 +198,7 @@ if __name__ == "__main__":
 
         #agentops.record(agentops.ActionEvent([chat_input, model]))
 
-        report = run_crew(model, chat_input, ira_agent_enabled, ira_agent)
+        report = run_crew(model, chat_input, zip_code, property_type, ira_agent_enabled, ira_agent, eli_agent_enabled, eli_agent)
 
         # Display the final result
         result = f"##### Manager's Final Report: \n\n {report}"
