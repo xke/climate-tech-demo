@@ -131,7 +131,7 @@ if __name__ == "__main__":
     #    news_analysis_agent = get_news_analysis_agent(chosen_llm)
 
     ira_agent_enabled = st.sidebar.checkbox(
-        'Inflation Reduction Act agent (PDF search)',
+        'Inflation Reduction Act agent (RAG PDF search)',
         value=True
     )
 
